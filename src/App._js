@@ -1,0 +1,169 @@
+//import React from 'react';
+import React, { useState } from 'react';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import SearchForm from './components/SearchForm';
+import { OrderProvider } from './OrderContext';
+import FlightPriceConfirmation from './components/FlightPriceConfirmation';  // Импортируем новый компонент
+import OrderConfirmation from './components/OrderConfirmation';  // Компонент для подтверждения заказа
+
+///import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+//import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
+import { Route, Routes } from 'react-router-dom';
+
+import { useNavigate } from 'react-router-dom';
+
+import SearchFormResults from './components/SearchFormResults';
+import axios from 'axios';
+
+import './App.css';
+
+//import { useState } from 'react';
+
+console.log(axios.isCancel('something'));
+////<Route path="/" element={<SearchForm />} />
+
+//export default App;
+const App = () => {
+    const [searchResults, setSearchResults] = useState(null); // Состояние для хранения результатов поиска
+    const [orderDetails, setOrderDetails] = useState(null);  // Состояние для хранения деталей заказа
+   
+    
+    const navigate = useNavigate(); // Правильное использование navigate (временно)
+
+// <Route path="/" element={<SearchForm />} />
+//function App() {
+   // return (
+     //   <div className="App">
+            // <Header />
+            //<main>
+             //   <Route path="/results" element={<SearchFormResults />} />
+           //     <Route path="/" element={<SearchForm />} />
+         //   </main>
+       //     <Footer />
+    //  //  </div>
+  //  );
+//}
+
+//const App1 = () => {
+    const handleSearch = async (formData) => {
+        console.log("Form data received in App.js:", formData); // Лог данных формы
+
+        try {
+         
+
+            // Лог запроса до отправки
+            console.log("Sending search request with params:", {
+                originLocationCode: formData.originLocationCode,
+                destinationLocationCode: formData.destinationLocationCode,
+                departureDate: formData.departureDate,
+                returnDate: formData.returnDate,
+                adults: formData.adults,
+                children: formData.children,
+                infants: formData.infants,
+                travelClass: formData.travelClass,
+                currencyCode: formData.currencyCode,
+                maxPrice: formData.maxPrice,
+                nonStop: formData.nonStop,
+                max: 250
+             
+            });
+
+
+
+
+
+            //const response = await axios.get('http://localhost:3000/api/flights/search', {
+            //ставим НЕабсолютный путь
+            ////const response = await axios.get('/api/flights/search', {
+            const response = await axios.get('/api/flights/results', {
+            ////const response = await axios.get('http://localhost:3000/api/flights/results', { 
+
+
+                params: {
+                    originLocationCode: formData.originLocationCode,
+                    destinationLocationCode: formData.destinationLocationCode,
+                    departureDate: formData.departureDate,
+                    returnDate: formData.returnDate,
+                    adults: formData.adults,
+                    children: formData.children,
+                    infants: formData.infants,
+                    travelClass: formData.travelClass,
+                    currencyCode: formData.currencyCode,
+                    maxPrice: formData.maxPrice,
+                    nonStop: formData.nonStop,
+                    max: 250 // Фиксированный параметр
+                }
+            });
+
+            //const result = await response.json();
+            //setSearchResults(result); // Сохраняем результаты поиска
+            console.log('Search response:', response.data); // Лог успешного ответа
+
+            setSearchResults(response.data); // Сохраняем результаты поиска
+           //// navigate('/results'); // Перенаправление на страницу с результатами поиска (//убрали временно)
+            navigate('/api/flights/results'); // Перенаправление на страницу с результатами поиска (//убрали временно)
+
+            console.log('Search results:', response.data);
+
+        } catch (error) {
+            console.error('Error fetching flight offers:', error);
+        }
+    };
+    // Использование navigate для управления переходами между страницами
+    //const navigate = useNavigate();
+    // Функция для создания заказа
+    const handleCreateOrder = async (orderData) => {
+        try {
+            const response = await axios.post('/api/flights/create-order', orderData);
+            setOrderDetails(response.data);  // Сохраняем детали заказа
+            ////navigate('/order-confirmation');  // Перенаправляем на страницу подтверждения заказа
+            navigate('/order-confirmation', { state: { orderDetails: response.data } });
+        } catch (error) {
+            console.error('Error creating flight order:', error);
+        }
+    };
+
+    return (
+        <OrderProvider>  {/* Оборачиваем все приложение в OrderProvider */}
+            
+                <Header /> 
+                
+      
+                 <main>
+
+                    <h1>Поиск авиабилетов</h1>
+                    <Routes>    
+                         {/* Маршрут для формы поиска */}
+                        <Route path="/" element={<SearchForm onSearch={handleSearch} />} />
+
+                        {/* Маршрут для страницы с результатами поиска */}
+
+                        <Route path="/api/flights/results" element={<SearchFormResults searchResults={searchResults} />} />
+
+                        {/* Маршрут для подтверждения цены */}
+                        <Route  path="/flight-price-confirmation" element={<FlightPriceConfirmation onCreateOrder={handleCreateOrder} />}  />  {/* Передаем функцию создания заказа */}
+                    
+
+                        {/* Маршрут для подтверждения заказа */}
+                        <Route path="/order-confirmation" element={<OrderConfirmation orderDetails={orderDetails} />}  />  {/*  Передаем детали заказа */}
+                    
+                        
+                    </Routes> 
+                </main>
+                <Footer />
+
+                </OrderProvider>
+    );
+//};
+};
+//  <h1>Поиск авиабилетов</h1>
+//<SearchForm onSearch={handleSearch} />
+
+
+////Route path="/results" element={<SearchFormResults searchResults={searchResults} 
+//<Route path="/flight-price-confirmation" element={<FlightPriceConfirmation />} /> {/* Новый маршрут */}
+                        
+
+export default App;

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: pilgrim_mongo
+    ports:
+      - "27017:27017"
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pilgrim_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/test --quiet
+      interval: 10s
+      retries: 5
+
+  pilgrim:
+    build:
+      context: .
+      args:
+        NODE_ENV: production
+    container_name: pilgrim_app
+    ports:
+      - "5001:5001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/pilgrimdb
+      - NODE_ENV=production
+    networks:
+      - pilgrim_network
+    restart: always
+
+volumes:
+  mongo_data:
+
+networks:
+  pilgrim_network:
+    driver: bridge

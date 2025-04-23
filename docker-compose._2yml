@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: pilgrim_mongo
+    ports:
+      - "27017:27017"
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pilgrim_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/test --quiet
+      interval: 10s
+      retries: 5
+
+  app:
+    build: .
+    container_name: pilgrim_app
+    ports:
+      - "3000:3000"  # React (frontend)
+      - "5001:5001"  # Express (backend)
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/pilgrimdb
+      - REACT_APP_API_URL=http://localhost:5001
+    volumes:
+      - ./certificate.crt:/app/certificate.crt
+      - ./private.key:/app/private.key
+    restart: always
+    networks:
+      - pilgrim_network
+
+volumes:
+  mongo_data:
+
+networks:
+  pilgrim_network:
+    driver: bridge

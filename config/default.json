@@ -1,0 +1,11 @@
+{
+    "amadeus": {
+        "apiUrl": "https://test.api.amadeus.com/v2/shopping/flight-offers",
+        "pricingUrl": "https://test.api.amadeus.com/v1/shopping/flight-offers/pricing?forceClass=false",
+        "client_id": "QtlYGyJzHejP1XRj8xiR2fdrA9gLSXDm",
+        "client_secret": "fD3sHSaAQd6pnPRs",
+        "token_url": "https://test.api.amadeus.com/v1/security/oauth2/token"
+    },
+    "mongoURI": "mongodb://mongo:27017/flightBooking"
+}
+ 

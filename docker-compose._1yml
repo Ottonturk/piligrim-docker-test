@@ -1,0 +1,54 @@
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: pilgrim_mongo
+    ports:
+      - "27017:27017"
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pilgrim_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/test --quiet
+      interval: 10s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: pilgrim_backend
+    depends_on:
+      mongo:
+        condition: service_healthy  # Ждем, пока Mongo будет готова
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/pilgrimdb"
+    ports:
+      - "5001:5001"
+    restart: always
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    networks:
+      - pilgrim_network
+
+  frontend:
+    build: .
+    container_name: pilgrim_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://piligrim_backend:5001
+    
+    restart: always
+    networks:
+      - pilgrim_network
+
+volumes:
+  mongo_data:
+
+networks:
+  pilgrim_network:
+    driver: bridge

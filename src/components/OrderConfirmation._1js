@@ -1,0 +1,40 @@
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import log from 'loglevel';
+import './OrderConfirmation.css';  // Импорт стилей
+
+const OrderConfirmation = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const orderResponse = location.state?.orderResponse;
+
+    if (!orderResponse) {
+        return <div>Нет данных о заказе.</div>;
+    }
+
+    log.info('Order Response:', orderResponse);
+
+    const orderId = orderResponse.id || 'Не указано';
+    const creationDate = orderResponse.creationDate ? new Date(orderResponse.creationDate).toLocaleDateString() : 'Не указано';
+    const orderStatus = orderResponse.status || 'Не указано';
+
+    return (
+        <div className="order-confirmation-container">
+            <h1>Заказ успешно создан!</h1>
+            <div className="order-details">
+                
+                <p>Номер заказа: {orderId}</p>
+                <p>Дата: {creationDate}</p>
+                <p>Статус: {orderStatus}</p>
+
+            </div>
+            <button onClick={() => navigate('/')}>Вернуться на главную</button>
+        </div>
+    );
+};
+
+//<p>Номер заказа: {orderResponse.id}</p>
+//<p>Дата: {new Date(orderResponse.creationDate).toLocaleDateString()}</p>
+//<p>Статус: {orderResponse.status}</p>
+
+export default OrderConfirmation;

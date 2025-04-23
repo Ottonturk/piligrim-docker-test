@@ -1,0 +1,167 @@
+const axios = require('axios');
+const config = require('config');
+const amadeusAuthService = require('./amadeusAuthService');  // Используем тот же сервис авторизации
+const winston = require('winston');
+
+// Логгер
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, level, message }) => {
+            return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+        })
+    ),
+    transports: [
+        new winston.transports.File({ filename: 'amadeusFlightCreateOrder_logs.txt' })
+    ]
+});
+
+const amadeusCreateOrderUrl = 'https://test.api.amadeus.com/v1/booking/flight-orders';  // URL для создания заказа
+
+// Функция для создания заказа
+//const createFlightOrder = async (orderData) => {
+const createFlightOrder = async ({ flightOffers, travelers }) => {
+    try {
+        // Получаем токен через сервис авторизации
+        const accessToken = await amadeusAuthService.getAccessToken();
+
+        // Преобразуем данные путешественников в формат, ожидаемый Amadeus API
+        const travelersData = travelers.map((traveler, index) => ({
+            id: `${index + 1}`,  // Присваиваем уникальный ID каждому пассажиру
+            dateOfBirth: traveler.dateOfBirth,
+            name: {
+                firstName: traveler.firstName,
+                lastName: traveler.lastName
+            },
+            gender: 'MALE',  // Пример значения, его нужно брать из данных
+            contact: {
+                emailAddress: traveler.email,
+                phones: [
+                    {
+                        deviceType: 'MOBILE',
+                        countryCallingCode: '1',  // Пример кода страны, его нужно брать из данных
+                        number: traveler.phone
+                    }
+                ]
+            },
+            documents: [
+                {
+                    documentType: 'PASSPORT',
+                    birthPlace: 'New York',
+
+                    issuanceLocation: "SOMEWHERE",
+                    issuanceDate: "2015-04-14",
+
+                    number: '123456789',  // Пример номера паспорта
+                    expiryDate: '2025-12-31',  // Пример даты истечения паспорта
+                    issuanceCountry: 'US',
+                    
+                    validityCountry: "US",
+                    nationality: 'US',
+                    holder: true
+                }
+            ],
+            ////новые объекты:
+            remarks: {
+                general: [
+                    {
+                        subType: "GENERAL_MISCELLANEOUS",
+                        text: "ONLINE BOOKING FROM INCREIBLE VIAJES"
+                    }
+                ]
+             },
+            ticketingAgreement: {
+                option: "DELAY_TO_CANCEL",
+                delay: "6D"
+            },
+             contacts: [
+            {
+            addresseeName: {
+             firstName: "PABLO",
+             lastName: "RODRIGUEZ"
+            },
+            companyName: "INCREIBLE VIAJES",
+            purpose: "STANDARD",
+            phones: [
+            {
+                deviceType: "LANDLINE",
+                countryCallingCode: "34",
+                number: "480080071"
+            },
+            {
+                deviceType: "MOBILE",
+                countryCallingCode: "33",
+                number: "480080072"
+            }
+        ],
+        emailAddress: "support@increibleviajes.es",
+        address: {
+          lines: [
+            "Calle Prado, 16"
+          ],
+          postalCode: "28014",
+          cityName: "Madrid",
+          countryCode: "ES"
+        }
+      }
+    ]
+
+
+
+        }));
+
+        // Логируем параметры запроса перед отправкой
+        logger.info('Sending flight order creation request', { flightOffers, travelersData });
+
+
+
+
+
+        // Логируем параметры запроса перед отправкой
+        //logger.info('Sending flight order creation request', { orderData });     
+        //logger.info('Sending flight order creation request', { flightOffers, travelers });
+
+
+        // Отправляем POST запрос в Amadeus API
+        const response = await axios.post(
+            amadeusCreateOrderUrl,
+            //{ data: orderData },  // Передаем данные заказа
+            {
+                data: {
+                    type: 'flight-order',
+                    flightOffers: flightOffers,
+                   // travelers: travelers
+                    travelers: travelersData  // Здесь заменяем travelers на travelersData
+                }
+            },
+
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,  // Bearer токен для авторизации
+                    'Cache-Control': 'no-cache',
+                    'User-Agent': 'YourApp/1.0',
+                    'Accept': '*/*',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        // Логируем успешное создание заказа
+        //logger.info(`Order created successfully: ${JSON.stringify(response.data)}`);
+        //return response.data;
+        const orderResponse = response.data;  // Теперь используем response.data вместо orderResponse
+        logger.info(`Order created successfully: ${JSON.stringify(orderResponse)}`);
+        return orderResponse;
+
+    } catch (error) {
+        // Логируем ошибки
+        logger.error(`Error creating order: ${error.message}`);
+        throw error;
+    }
+};
+
+module.exports = {
+    createFlightOrder
+};
+ 

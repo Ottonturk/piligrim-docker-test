@@ -1,0 +1,174 @@
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import log from 'loglevel';
+import './FlightPriceConfirmation.css'; // Подключаем стили
+
+log.setLevel('info');
+
+const FlightPriceConfirmation = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Данные подтвержденной цены передаются через состояние
+    const confirmedPrice = location.state?.confirmedPrice;
+
+    if (!confirmedPrice) {
+        return <div>Нет данных о подтвержденной цене.</div>;
+    }
+
+    log.info("Confirmed Price:", confirmedPrice);
+
+    // Проверяем, есть ли flightOffers и содержит ли массив хотя бы один элемент
+    const flightOffers = confirmedPrice.data?.flightOffers;
+    if (!flightOffers || flightOffers.length === 0) {
+        return <div>Не удалось получить информацию о предложении.</div>;
+    }
+
+    // Локальное состояние для хранения данных пассажиров
+    const [travelers, setTravelers] = useState([
+        { firstName: '', lastName: '', dateOfBirth: '', email: '', phone: '' },
+    ]);
+
+    // Обработчик изменений в полях пассажиров
+    const handleTravelerChange = (index, field, value) => {
+        const updatedTravelers = [...travelers];
+        updatedTravelers[index][field] = value;
+        setTravelers(updatedTravelers);
+    };
+
+    // Обработчик добавления нового пассажира
+    const handleAddTraveler = () => {
+        setTravelers([...travelers, { firstName: '', lastName: '', dateOfBirth: '', email: '', phone: '' }]);
+    };
+
+
+     // Валидация данных пассажиров перед отправкой
+     const validateTravelers = () => {
+        for (const traveler of travelers) {
+            if (!traveler.firstName || !traveler.lastName || !traveler.dateOfBirth || !traveler.email || !traveler.phone) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // Обработчик отправки данных на создание заказа
+    const handleCreateOrder = async () => {
+
+        if (!validateTravelers()) {
+            log.error("Все поля пассажиров должны быть заполнены.");
+            alert("Все поля пассажиров должны быть заполнены.");
+            return;
+        }
+        try {
+            const response = await axios.post('/api/flights/create-order', {
+                flightOffers: flightOffers,
+                travelers: travelers
+            });
+
+            log.info("Order creation response:", response.data);
+
+            // Перенаправляем пользователя на страницу подтверждения заказа
+            navigate('/order-confirmation', { state: { orderDetails: response.data } });
+        } catch (error) {
+            log.error("Error creating flight order:", error);
+        }
+    };
+
+    return (
+        <div className="price-confirmation-container">
+            <h1>Подтверждение цены</h1>
+
+            {/* Отображаем информацию для каждого flightOffer */}
+            {flightOffers.map((offer, offerIndex) => {
+                const priceTotal = offer.price?.total || "Не указано";
+                const priceCurrency = offer.price?.currency || "Не указано";
+                const bookingId = offer.id || "Не указано";
+                const availableSeats = offer.numberOfBookableSeats || "Не указано";
+
+                return (
+                    <div key={offerIndex} className="offer-details">
+                        <h2>Предложение {offerIndex + 1}</h2>
+                        <p>Цена: {priceTotal} {priceCurrency}</p>
+                        <p>Номер брони: {bookingId}</p>
+                        <p>Остаток доступных мест: {availableSeats}</p>
+
+                        {/* Проходим по сегментам каждого flightOffer */}
+                        {offer.itineraries?.map((itinerary, itineraryIndex) => (
+                            <div key={itineraryIndex} className="itinerary-details">
+                                <h3>Маршрут {itineraryIndex + 1}</h3>
+
+                                {itinerary.segments?.map((segment, segmentIndex) => {
+                                    const flightDestination = segment.aircraft?.code || 'Не указано';
+                                    const departureTime = segment.departure?.at || 'Не указано';
+                                    const departureAirport = segment.departure?.iataCode || 'Не указано';
+                                    const departureTerminal = segment.departure?.terminal || 'Не указано';
+
+                                    const arrivalTime = segment.arrival?.at || 'Не указано';
+                                    const arrivalAirport = segment.arrival?.iataCode || 'Не указано';
+                                    const arrivalTerminal = segment.arrival?.terminal || 'Не указано';
+
+                                    return (
+                                        <div key={segmentIndex} className="segment-details">
+                                            <h4>Сегмент {segmentIndex + 1}</h4>
+                                            <p>Код А/К: {flightDestination}</p>
+                                            <p>Отправление: {departureTime} (Аэропорт: {departureAirport}, Терминал: {departureTerminal})</p>
+                                            <p>Прибытие: {arrivalTime} (Аэропорт: {arrivalAirport}, Терминал: {arrivalTerminal})</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ))}
+                    </div>
+                );
+            })}
+
+            {/* Форма для ввода данных пассажиров */}
+            <h2>Информация о пассажирах</h2>
+            {travelers.map((traveler, index) => (
+                <div key={index} className="traveler-form">
+                    <h3>Пассажир {index + 1}</h3>
+                    <input
+                        type="text"
+                        placeholder="Имя"
+                        value={traveler.firstName}
+                        onChange={(e) => handleTravelerChange(index, 'firstName', e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Фамилия"
+                        value={traveler.lastName}
+                        onChange={(e) => handleTravelerChange(index, 'lastName', e.target.value)}
+                    />
+                    <input
+                        type="date"
+                        placeholder="Дата рождения"
+                        value={traveler.dateOfBirth}
+                        onChange={(e) => handleTravelerChange(index, 'dateOfBirth', e.target.value)}
+                    />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={traveler.email}
+                        onChange={(e) => handleTravelerChange(index, 'email', e.target.value)}
+                    />
+                    <input
+                        type="tel"
+                        placeholder="Телефон"
+                        value={traveler.phone}
+                        onChange={(e) => handleTravelerChange(index, 'phone', e.target.value)}
+                    />
+                </div>
+            ))}
+            <button onClick={handleAddTraveler}>Добавить пассажира</button>
+
+            {/* Кнопка для создания заказа */}
+            <button className="create-order-btn" onClick={handleCreateOrder}>Создать заказ</button>
+
+            <button className="back-btn" onClick={() => navigate(-1)}>Назад к результатам</button>
+        </div>
+    );
+};
+
+export default FlightPriceConfirmation;

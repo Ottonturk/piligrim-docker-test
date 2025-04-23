@@ -1,0 +1,106 @@
+.results-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-params {
+    display: flex;
+    gap: 30px;
+}
+
+.recalculate-btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.flight-results {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.flight-card {
+    display: flex;
+    justify-content: space-between;
+    width: 729px;
+    height: 265px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f9f9f9;
+}
+
+.flight-segments {
+    width: 522px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.segment-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.departure, .arrival, .duration {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 105px;
+}
+
+.duration {
+    width: 256px;
+}
+
+.flight-price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.refresh-price-btn {
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.carrier {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.carrier-logo {
+    width: 32px;
+    height: 32px;
+}
+
+.carrier-name {
+    font-size: 16px;
+    font-weight: bold;
+}
