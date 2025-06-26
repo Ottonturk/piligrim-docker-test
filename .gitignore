@@ -24,4 +24,5 @@ yarn-error.log*
 
 # SSL сертификаты
 /private.key
-/certificate.crt
+/certificate.crtlogs.txt
+controllers/flightController_logs.txt
